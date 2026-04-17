@@ -1,0 +1,31 @@
+{
+  "name": "introducao-jwt",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "fastify": "^5.8.4",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.20.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manel-back/JWT-Mercadinho.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/manel-back/JWT-Mercadinho/issues"
+  },
+  "homepage": "https://github.com/manel-back/JWT-Mercadinho#readme"
+}
