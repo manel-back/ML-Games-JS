@@ -1,9 +1,9 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
-import userRoutes from './Routes/userroutes.js';
-import gameroutes from './Routes/gameroutes.js'; 
-import authRoutes from './Routes/authroutes.js'; 
+import userRoutes from './routes/userroutes.js';
+import gameroutes from './routes/gameroutes.js'; 
+import authRoutes from './routes/authroutes.js'; 
 
 const app = express();
 

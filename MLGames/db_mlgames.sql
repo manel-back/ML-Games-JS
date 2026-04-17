@@ -1,31 +1,32 @@
-create database db_mlgames;
-use db_mlgames;
+CREATE DATABASE db_mlgames;
+USE db_mlgames;
 
 -----------------------------------------------------
 
 -- 👤 USUÁRIOS (admin e cliente)
-create table usuarios(
-	id int primary key auto_increment,
-    nome varchar(100),
-    email varchar(100) not null unique,
-    senha varchar(255) not null,
-    role varchar(20) not null, -- admin ou cliente
-    created_at timestamp default current_timestamp
+CREATE TABLE usuarios(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(100), -- nome real
+    username VARCHAR(50) NOT NULL UNIQUE, -- login único
+    email VARCHAR(100) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL, -- admin ou cliente
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 👨‍💼 EXEMPLO DE ADMIN
-insert into usuarios (nome, email, senha, role) values
-('Admin', 'admin@gmail.com', 'admin', 'admin');
+-- 👨‍💼 ADMIN PADRÃO
+INSERT INTO usuarios (nome, username, email, senha, role) VALUES
+('Emannuel', 'manel', 'manel@gmail.com', 'manel', 'admin');
 
 -----------------------------------------------------
 
 -- 🎮 CONSOLES
-create table consoles(
-	id int primary key auto_increment,
-    nome varchar(50) not null
+CREATE TABLE consoles(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(50) NOT NULL
 );
 
-insert into consoles (nome) values
+INSERT INTO consoles (nome) VALUES
 ('PC'),
 ('PS1'),
 ('PS2'),
@@ -36,37 +37,37 @@ insert into consoles (nome) values
 -----------------------------------------------------
 
 -- 🎯 GAMES
-create table games(
-	id int primary key auto_increment,
-    nome varchar(100) not null,
-    descricao text,
-    ano int,
-    empresa varchar(100),
-    tamanho varchar(50),
-    download_link text not null,
-    imagem text, -- capa do jogo
-    created_at timestamp default current_timestamp
+CREATE TABLE games(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    descricao TEXT,
+    ano INT,
+    empresa VARCHAR(100),
+    tamanho VARCHAR(50),
+    download_link TEXT NOT NULL,
+    imagem TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -----------------------------------------------------
 
 -- 🔗 RELAÇÃO GAME x CONSOLE
-create table game_console(
-	game_id int not null,
-    console_id int not null,
-    primary key (game_id, console_id),
-    foreign key (game_id) references games(id) on delete cascade,
-    foreign key (console_id) references consoles(id) on delete cascade
+CREATE TABLE game_console(
+    game_id INT NOT NULL,
+    console_id INT NOT NULL,
+    PRIMARY KEY (game_id, console_id),
+    FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE,
+    FOREIGN KEY (console_id) REFERENCES consoles(id) ON DELETE CASCADE
 );
 
 -----------------------------------------------------
 
 -- 📥 DOWNLOADS (contador)
-create table downloads(
-	id int primary key auto_increment,
-    usuario_id int null,
-    game_id int not null,
-    data_download timestamp default current_timestamp,
-    foreign key (usuario_id) references usuarios(id) on delete set null,
-    foreign key (game_id) references games(id) on delete cascade
+CREATE TABLE downloads(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT NULL,
+    game_id INT NOT NULL,
+    data_download TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE
 );

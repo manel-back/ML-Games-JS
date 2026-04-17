@@ -1,85 +1,119 @@
-import db from "../database/db.js";
+import db from "../config/db.js";
 
-// Listar todos os itens
-export async function getAllGames(req, res) {
+// Função padrão de erro
+function handleError(res, err) {
+  console.error(err);
+  return res.status(500).json({ erro: "Erro interno do servidor" });
+}
+
+// Listar todos
+export function getAllGames(req, res) {
   db.query("SELECT * FROM games", (err, results) => {
-    if (err) return res.status(500).json({ erro: err.message });
+    if (err) return handleError(res, err);
 
-    res.json(results);
+    res.json({
+      sucesso: true,
+      dados: results,
+    });
   });
 }
 
-// Buscar item por ID
-export async function getGameById(req, res) {
+// Buscar por ID
+export function getGameById(req, res) {
   const { id } = req.params;
 
   db.query("SELECT * FROM games WHERE id = ?", [id], (err, results) => {
-    if (err) return res.status(500).json({ erro: err.message });
+    if (err) return handleError(res, err);
 
     if (results.length === 0) {
-      return res.status(404).json({ message: "Game não encontrado" });
+      return res.status(404).json({
+        sucesso: false,
+        mensagem: "Game não encontrado",
+      });
     }
 
-    res.json(results[0]);
+    res.json({
+      sucesso: true,
+      dados: results[0],
+    });
   });
 }
 
-// Criar item
-export async function createGame(req, res) {
-  const { nome, quantidade } = req.body;
+// Criar game
+export function createGame(req, res) {
+  const { nome, descricao, ano, empresa, tamanho, download_link, imagem } = req.body;
 
-  if (!nome || !quantidade) {
-    return res
-      .status(400)
-      .json({ message: "Nome e quantidade são obrigatórios" });
+  if (!nome || !download_link) {
+    return res.status(400).json({
+      sucesso: false,
+      mensagem: "Nome e link de download são obrigatórios",
+    });
   }
 
   db.query(
-    "INSERT INTO itens (nome, quantidade) VALUES (?, ?)",
-    [nome, quantidade],
+    `INSERT INTO games 
+    (nome, descricao, ano, empresa, tamanho, download_link, imagem) 
+    VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [nome, descricao, ano, empresa, tamanho, download_link, imagem],
     (err, result) => {
-      if (err) return res.status(500).json({ erro: err.message });
+      if (err) return handleError(res, err);
 
       res.status(201).json({
-        id: result.insertId,
-        nome,
-        quantidade,
+        sucesso: true,
+        dados: {
+          id: result.insertId,
+          nome,
+        },
       });
     }
   );
 }
 
-// Atualizar item
-export async function updateGame(req, res) {
+// Atualizar game
+export function updateGame(req, res) {
   const { id } = req.params;
-  const { nome, quantidade } = req.body;
+  const { nome, descricao, ano, empresa, tamanho, download_link, imagem } = req.body;
 
   db.query(
-    "UPDATE itens SET nome = ?, quantidade = ? WHERE id = ?",
-    [nome, quantidade, id],
+    `UPDATE games 
+     SET nome = ?, descricao = ?, ano = ?, empresa = ?, tamanho = ?, download_link = ?, imagem = ?
+     WHERE id = ?`,
+    [nome, descricao, ano, empresa, tamanho, download_link, imagem, id],
     (err, result) => {
-      if (err) return res.status(500).json({ erro: err.message });
+      if (err) return handleError(res, err);
 
       if (result.affectedRows === 0) {
-        return res.status(404).json({ message: "Item não encontrado" });
+        return res.status(404).json({
+          sucesso: false,
+          mensagem: "Game não encontrado",
+        });
       }
 
-      res.json({ message: "Item atualizado com sucesso" });
+      res.json({
+        sucesso: true,
+        mensagem: "Game atualizado com sucesso",
+      });
     }
   );
 }
 
-// Deletar item
-export async function deleteGame(req, res) {
+// Deletar game
+export function deleteGame(req, res) {
   const { id } = req.params;
 
   db.query("DELETE FROM games WHERE id = ?", [id], (err, result) => {
-    if (err) return res.status(500).json({ erro: err.message });
+    if (err) return handleError(res, err);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Game não encontrado" });
+      return res.status(404).json({
+        sucesso: false,
+        mensagem: "Game não encontrado",
+      });
     }
 
-    res.json({ message: "Game removido com sucesso" });
+    res.json({
+      sucesso: true,
+      mensagem: "Game removido com sucesso",
+    });
   });
 }

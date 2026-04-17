@@ -1,76 +1,151 @@
-import db from "../database/db.js";
+import db from "../config/db.js";
+import bcrypt from "bcrypt";
 
 // Função padrão para erro
 function handleError(res, err) {
-  return res.status(500).json({ erro: err.message });
+  console.error(err);
+  return res.status(500).json({ erro: "Erro interno do servidor" });
 }
 
 // Listar todos
 export function getAllUsers(req, res) {
-  db.query("SELECT * FROM usuarios", (err, results) => {
-    if (err) return handleError(res, err);
-    res.json(results);
-  });
+  db.query(
+    "SELECT id, nome, email, role, created_at FROM usuarios",
+    (err, results) => {
+      if (err) return handleError(res, err);
+
+      res.json({
+        sucesso: true,
+        dados: results,
+      });
+    }
+  );
 }
 
 // Buscar por ID
 export function getUserById(req, res) {
   const { id } = req.params;
 
-  db.query("SELECT * FROM usuarios WHERE id = ?", [id], (err, results) => {
-    if (err) return handleError(res, err);
-
-    if (results.length === 0) {
-      return res.status(404).json({ mensagem: "Usuário não encontrado" });
-    }
-
-    res.json(results[0]);
-  });
-}
-
-// Criar usuário
-export function createUser(req, res) {
-  const { nome, idade } = req.body;
-
-  if (!nome || !idade) {
-    return res.status(400).json({ mensagem: "Nome e idade são obrigatórios" });
-  }
-
   db.query(
-    "INSERT INTO usuarios (nome, idade) VALUES (?, ?)",
-    [nome, idade],
-    (err, result) => {
+    "SELECT id, nome, email, role, created_at FROM usuarios WHERE id = ?",
+    [id],
+    (err, results) => {
       if (err) return handleError(res, err);
 
-      res.status(201).json({
-        id: result.insertId,
-        nome,
-        idade,
+      if (results.length === 0) {
+        return res.status(404).json({
+          sucesso: false,
+          mensagem: "Usuário não encontrado",
+        });
+      }
+
+      res.json({
+        sucesso: true,
+        dados: results[0],
       });
     }
   );
 }
 
+// Criar usuário
+export async function createUser(req, res) {
+  let { nome, email, senha, role } = req.body;
+
+  if (!nome || !email || !senha) {
+    return res.status(400).json({
+      sucesso: false,
+      mensagem: "Nome, email e senha são obrigatórios",
+    });
+  }
+
+  // Segurança: define padrão como cliente
+  if (!role) role = "cliente";
+
+  // Validação de role
+  if (!["admin", "cliente"].includes(role)) {
+    return res.status(400).json({
+      sucesso: false,
+      mensagem: "Role inválido",
+    });
+  }
+
+  try {
+    const hash = await bcrypt.hash(senha, 10);
+
+    db.query(
+      "INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?, ?, ?)",
+      [nome, email, hash, role],
+      (err, result) => {
+        if (err) {
+          if (err.code === "ER_DUP_ENTRY") {
+            return res.status(400).json({
+              sucesso: false,
+              mensagem: "Email já cadastrado",
+            });
+          }
+          return handleError(res, err);
+        }
+
+        res.status(201).json({
+          sucesso: true,
+          dados: {
+            id: result.insertId,
+            nome,
+            email,
+            role,
+          },
+        });
+      }
+    );
+  } catch (err) {
+    return handleError(res, err);
+  }
+}
+
 // Atualizar usuário
 export function updateUser(req, res) {
   const { id } = req.params;
-  const { nome, idade } = req.body;
+  const { nome, email, role } = req.body;
 
-  if (!nome || !idade) {
-    return res.status(400).json({ mensagem: "Nome e idade são obrigatórios" });
+  if (!nome || !email || !role) {
+    return res.status(400).json({
+      sucesso: false,
+      mensagem: "Nome, email e role são obrigatórios",
+    });
+  }
+
+  if (!["admin", "cliente"].includes(role)) {
+    return res.status(400).json({
+      sucesso: false,
+      mensagem: "Role inválido",
+    });
   }
 
   db.query(
-    "UPDATE usuarios SET nome = ?, idade = ? WHERE id = ?",
-    [nome, idade, id],
+    "UPDATE usuarios SET nome = ?, email = ?, role = ? WHERE id = ?",
+    [nome, email, role, id],
     (err, result) => {
-      if (err) return handleError(res, err);
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ mensagem: "Usuário não encontrado" });
+      if (err) {
+        if (err.code === "ER_DUP_ENTRY") {
+          return res.status(400).json({
+            sucesso: false,
+            mensagem: "Email já cadastrado",
+          });
+        }
+        return handleError(res, err);
       }
 
-      res.json({ mensagem: "Usuário atualizado com sucesso" });
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          sucesso: false,
+          mensagem: "Usuário não encontrado",
+        });
+      }
+
+      res.json({
+        sucesso: true,
+        mensagem: "Usuário atualizado com sucesso",
+      });
     }
   );
 }
@@ -83,9 +158,15 @@ export function deleteUser(req, res) {
     if (err) return handleError(res, err);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ mensagem: "Usuário não encontrado" });
+      return res.status(404).json({
+        sucesso: false,
+        mensagem: "Usuário não encontrado",
+      });
     }
 
-    res.json({ mensagem: "Usuário deletado com sucesso" });
+    res.json({
+      sucesso: true,
+      mensagem: "Usuário deletado com sucesso",
+    });
   });
 }
