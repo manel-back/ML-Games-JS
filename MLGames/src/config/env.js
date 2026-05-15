@@ -1,15 +1,21 @@
-function required(envVar, name) {
-    if (!envVar) {
-      throw new Error(`Variável de ambiente ${name} não definida`);
-    }
-    return envVar;
+import dotenv from "dotenv";
+dotenv.config();
+
+function required(name, fallback) {
+  const value = process.env[name] ?? fallback;
+  if (value === undefined || value === "") {
+    throw new Error(`Variável de ambiente obrigatória ausente: ${name}`);
   }
-  
-  export const DB_HOST = required(process.env.DB_HOST, "localhost");
-  export const DB_USER = required(process.env.DB_USER, "root");
-  export const DB_PASSWORD = required(process.env.DB_PASSWORD, "ipora@123");
-  export const DB_NAME = required(process.env.DB_NAME, "db_mlgames");
-  
-  export const DB_PORT = process.env.DB_PORT || 3306;
-  
-  export const JWT_SECRET = required(process.env.JWT_SECRET, "130708Manel");
+  return value;
+}
+
+export const env = {
+  PORT: Number(process.env.PORT || 3000),
+  DB_HOST: required("DB_HOST", "localhost"),
+  DB_PORT: Number(process.env.DB_PORT || 3306),
+  DB_USER: required("DB_USER", "root"),
+  DB_PASSWORD: process.env.DB_PASSWORD ?? "ipora@123",
+  DB_NAME: required("DB_NAME", "db_mlgames"),
+  JWT_SECRET: required("JWT_SECRET", "change-me-in-production"),
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "1d",
+};

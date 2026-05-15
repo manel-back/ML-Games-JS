@@ -1,25 +1,15 @@
-// config/db.js
-
 import mysql from "mysql2";
-import {
-  DB_HOST,
-  DB_USER,
-  DB_PASSWORD,
-  DB_NAME,
-  DB_PORT
-} from "./env.js";
+import { env } from "./env.js";
 
-const db = mysql.createPool({
-  host: DB_HOST,
-  user: DB_USER,
-  password: DB_PASSWORD,
-  database: DB_NAME,
-  port: DB_PORT,
+const pool = mysql.createPool({
+  host: env.DB_HOST,
+  port: env.DB_PORT,
+  user: env.DB_USER,
+  password: env.DB_PASSWORD,
+  database: env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
-}).promise();
+  queueLimit: 0,
+});
 
-console.log("✅ Pool de conexões MySQL criado");
-
-export default db;
+export const db = pool.promise();

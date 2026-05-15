@@ -1,119 +1,65 @@
-import db from "../config/db.js";
+import { db } from "../config/db.js";
 
-// Função padrão de erro
-function handleError(res, err) {
-  console.error(err);
-  return res.status(500).json({ erro: "Erro interno do servidor" });
-}
-
-// Listar todos
-export function getAllGames(req, res) {
-  db.query("SELECT * FROM games", (err, results) => {
-    if (err) return handleError(res, err);
-
-    res.json({
-      sucesso: true,
-      dados: results,
-    });
-  });
-}
-
-// Buscar por ID
-export function getGameById(req, res) {
-  const { id } = req.params;
-
-  db.query("SELECT * FROM games WHERE id = ?", [id], (err, results) => {
-    if (err) return handleError(res, err);
-
-    if (results.length === 0) {
-      return res.status(404).json({
-        sucesso: false,
-        mensagem: "Game não encontrado",
-      });
-    }
-
-    res.json({
-      sucesso: true,
-      dados: results[0],
-    });
-  });
-}
-
-// Criar game
-export function createGame(req, res) {
-  const { nome, descricao, ano, empresa, tamanho, download_link, imagem } = req.body;
-
-  if (!nome || !download_link) {
-    return res.status(400).json({
-      sucesso: false,
-      mensagem: "Nome e link de download são obrigatórios",
-    });
+export async function listGames(_req, res) {
+  try {
+    const [rows] = await db.query("SELECT * FROM games ORDER BY id DESC");
+    res.json(rows);
+  } catch (err) {
+    console.error("listGames error:", err);
+    res.status(500).json({ error: "Erro interno" });
   }
-
-  db.query(
-    `INSERT INTO games 
-    (nome, descricao, ano, empresa, tamanho, download_link, imagem) 
-    VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [nome, descricao, ano, empresa, tamanho, download_link, imagem],
-    (err, result) => {
-      if (err) return handleError(res, err);
-
-      res.status(201).json({
-        sucesso: true,
-        dados: {
-          id: result.insertId,
-          nome,
-        },
-      });
-    }
-  );
 }
 
-// Atualizar game
-export function updateGame(req, res) {
-  const { id } = req.params;
-  const { nome, descricao, ano, empresa, tamanho, download_link, imagem } = req.body;
-
-  db.query(
-    `UPDATE games 
-     SET nome = ?, descricao = ?, ano = ?, empresa = ?, tamanho = ?, download_link = ?, imagem = ?
-     WHERE id = ?`,
-    [nome, descricao, ano, empresa, tamanho, download_link, imagem, id],
-    (err, result) => {
-      if (err) return handleError(res, err);
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({
-          sucesso: false,
-          mensagem: "Game não encontrado",
-        });
-      }
-
-      res.json({
-        sucesso: true,
-        mensagem: "Game atualizado com sucesso",
-      });
-    }
-  );
+export async function getGame(req, res) {
+  try {
+    const [rows] = await db.query("SELECT * FROM games WHERE id = ?", [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: "Game não encontrado" });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("getGame error:", err);
+    res.status(500).json({ error: "Erro interno" });
+  }
 }
 
-// Deletar game
-export function deleteGame(req, res) {
-  const { id } = req.params;
-
-  db.query("DELETE FROM games WHERE id = ?", [id], (err, result) => {
-    if (err) return handleError(res, err);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        sucesso: false,
-        mensagem: "Game não encontrado",
-      });
+export async function createGame(req, res) {
+  try {
+    const { nome, genero, preco, plataforma } = req.body;
+    if (!nome || preco == null) {
+      return res.status(400).json({ error: "nome e preco são obrigatórios" });
     }
+    const [result] = await db.query(
+      "INSERT INTO games (nome, genero, preco, plataforma) VALUES (?, ?, ?, ?)",
+      [nome, genero ?? null, preco, plataforma ?? null]
+    );
+    res.status(201).json({ id: result.insertId, nome, genero, preco, plataforma });
+  } catch (err) {
+    console.error("createGame error:", err);
+    res.status(500).json({ error: "Erro interno" });
+  }
+}
 
-    res.json({
-      sucesso: true,
-      mensagem: "Game removido com sucesso",
-    });
-  });
+export async function updateGame(req, res) {
+  try {
+    const { nome, genero, preco, plataforma } = req.body;
+    const [result] = await db.query(
+      "UPDATE games SET nome = ?, genero = ?, preco = ?, plataforma = ? WHERE id = ?",
+      [nome, genero ?? null, preco, plataforma ?? null, req.params.id]
+    );
+    if (result.affectedRows === 0) return res.status(404).json({ error: "Game não encontrado" });
+    res.json({ id: Number(req.params.id), nome, genero, preco, plataforma });
+  } catch (err) {
+    console.error("updateGame error:", err);
+    res.status(500).json({ error: "Erro interno" });
+  }
+}
+
+export async function deleteGame(req, res) {
+  try {
+    const [result] = await db.query("DELETE FROM games WHERE id = ?", [req.params.id]);
+    if (result.affectedRows === 0) return res.status(404).json({ error: "Game não encontrado" });
+    res.status(204).send();
+  } catch (err) {
+    console.error("deleteGame error:", err);
+    res.status(500).json({ error: "Erro interno" });
+  }
 }

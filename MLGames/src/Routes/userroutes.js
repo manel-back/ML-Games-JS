@@ -1,13 +1,15 @@
-import express from 'express';
-import { getAllUsers, getUserById, createUser, updateUser, deleteUser } from '../controllers/usercontroller.js';
-import { authenticateToken } from '../middleware/authmiddleware.js';
+import { Router } from "express";
+import { authenticateToken, requireRole } from "../middleware/authMiddleware.js";
+import { createUser, listUsers, getUser, deleteUser } from "../controllers/userController.js";
 
-const router = express.Router();
+const router = Router();
 
-router.get('/', authenticateToken, getAllUsers);
-router.get('/:id', authenticateToken, getUserById);
-router.post('/', authenticateToken,  createUser);
-router.put('/:id', authenticateToken, updateUser);
-router.delete('/:id', authenticateToken, deleteUser);
+// Cadastro público
+router.post("/", createUser);
+
+// Rotas protegidas
+router.get("/", authenticateToken, requireRole("admin"), listUsers);
+router.get("/:id", authenticateToken, getUser);
+router.delete("/:id", authenticateToken, requireRole("admin"), deleteUser);
 
 export default router;
